@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Medication Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.waves.min.js"></script>
+  <style>
+    :root {
+      --primary-blue: #1A6BAA;
+      --hover-blue: #0F4E7A;
+      --background-gradient: linear-gradient(to bottom right, #1A6BAA, #0F4E7A);
+    }
+
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* Animated Background */
+    #animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      padding: 2rem;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .content {
+      background-color: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    h2 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 1.5rem;
+    }
+
+    /* Search Bar */
+    .search-container {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #e0e6ed;
+      border-radius: 10px;
+      font-size: 1rem;
+      padding-left: 2.5rem;
+      background-color: #f9fbfd;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+      box-shadow: 0 0 0 2px rgba(26, 107, 170, 0.2);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #7f8c8d;
+    }
+
+    /* Patient Selection */
+    .patient-selection {
+      text-align: center;
+    }
+
+    .patient-card {
+      background-color: #f9fbfd;
+      border: 1px solid #e0e6ed;
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .patient-card:hover {
+      background-color: #e6f0f7;
+      border-color: var(--primary-blue);
+    }
+
+    .patient-card h3 {
+      color: var(--primary-blue);
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem; /* Reduced from default size */
+      font-weight: 600; /* Slightly less bold */
+    }
+
+    .patient-info {
+      color: #7f8c8d;
+      font-size: 0.85rem; /* Slightly smaller info text */
+    }
+
+    /* No Results Message */
+    .no-results {
+      text-align: center;
+      color: #7f8c8d;
+      padding: 2rem;
+      font-style: italic;
+    }
+
+    /* Medication List */
+    .medication-list {
+      list-style: none;
+      padding: 0;
+      margin-top: 1.5rem;
+    }
+
+    .medication-item {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      border: 1px solid #e0e6ed;
+      border-radius: 10px;
+      background-color: #f9fbfd;
+      transition: background-color 0.3s ease;
+    }
+
+    .medication-item input[type="checkbox"] {
+      margin-right: 1rem;
+      transform: scale(1.2);
+    }
+
+    .medication-item input[type="checkbox"]:checked + label {
+      text-decoration: line-through;
+      color: #7f8c8d;
+    }
+
+    label {
+      cursor: pointer;
+    }
+
+    /* Back Button */
+    .back-btn {
+      background-color: var(--primary-blue);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      margin-bottom: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .back-btn:hover {
+      background-color: var(--hover-blue);
+    }
+
+    /* Patient Header */
+    .patient-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #e0e6ed;
+    }
+
+    .patient-name {
+      color: var(--primary-blue);
+      font-size: 1.3rem; /* Slightly smaller than before */
+      font-weight: bold;
+    }
+
+    .patient-status {
+      background-color: #e74c3c;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+
+    /* Hidden class for toggling views */
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Animated Background -->
+  <div id="animated-bg"></div>
+
+  <div class="container">
+    <div class="content">
+      <!-- Patient Selection View -->
+      <div id="patient-selection-view">
+        <h2>Select Patient</h2>
+        
+        <!-- Search Bar -->
+        <div class="search-container">
+          <i class="fas fa-search search-icon"></i>
+          <input type="text" class="search-input" id="patient-search" placeholder="Search patients by name..." oninput="filterPatients()">
+        </div>
+        
+        <div class="patient-selection" id="patient-list">
+          <div class="patient-card" data-name="John Doe" onclick="showMedicationList('John Doe', 'Critical')">
+            <h3>John Doe</h3>
+            <div class="patient-info">Room 203 • 65 years • Diabetes, Hypertension</div>
+          </div>
+          <div class="patient-card" data-name="Jane Smith" onclick="showMedicationList('Jane Smith', 'Stable')">
+            <h3>Jane Smith</h3>
+            <div class="patient-info">Room 205 • 42 years • Asthma, Allergies</div>
+          </div>
+          <div class="patient-card" data-name="Robert Johnson" onclick="showMedicationList('Robert Johnson', 'Recovering')">
+            <h3>Robert Johnson</h3>
+            <div class="patient-info">Room 210 • 58 years • Post-surgical care</div>
+          </div>
+          <div class="patient-card" data-name="Sarah Williams" onclick="showMedicationList('Sarah Williams', 'Stable')">
+            <h3>Sarah Williams</h3>
+            <div class="patient-info">Room 215 • 34 years • Migraines</div>
+          </div>
+          <div class="patient-card" data-name="Michael Brown" onclick="showMedicationList('Michael Brown', 'Critical')">
+            <h3>Michael Brown</h3>
+            <div class="patient-info">Room 220 • 72 years • CHF, COPD</div>
+          </div>
+        </div>
+        
+        <div id="no-results" class="no-results hidden">
+          No patients found matching your search.
+        </div>
+      </div>
+
+      <!-- Medication List View -->
+      <div id="medication-view" class="hidden">
+        <button class="back-btn" onclick="showPatientSelection()">
+          <i class="fas fa-arrow-left"></i> Back to Patients
+        </button>
+        
+        <div class="patient-header">
+          <div class="patient-name" id="current-patient">John Doe</div>
+          <div class="patient-status" id="patient-status">Critical</div>
+        </div>
+
+        <h2>Medication Checklist</h2>
+        <ul class="medication-list">
+          <li class="medication-item">
+            <input type="checkbox" id="med1">
+            <label for="med1">Aspirin 100mg (Morning)</label>
+          </li>
+          <li class="medication-item">
+            <input type="checkbox" id="med2">
+            <label for="med2">Metformin 500mg (After meals)</label>
+          </li>
+          <li class="medication-item">
+            <input type="checkbox" id="med3">
+            <label for="med3">Lisinopril 10mg (Evening)</label>
+          </li>
+          <li class="medication-item">
+            <input type="checkbox" id="med4">
+            <label for="med4">Atorvastatin 20mg (At bedtime)</label>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vanta.js Initialization Script -->
+  <script>
+    VANTA.WAVES({
+      el: "#animated-bg",
+      color: "#1A6BAA",
+      shininess: 50,
+      waveHeight: 20,
+      waveSpeed: 1,
+      zoom: 1
+    });
+
+    // Patient data array
+    const patients = [
+      { name: "John Doe", status: "Critical", info: "Room 203 • 65 years • Diabetes, Hypertension" },
+      { name: "Jane Smith", status: "Stable", info: "Room 205 • 42 years • Asthma, Allergies" },
+      { name: "Robert Johnson", status: "Recovering", info: "Room 210 • 58 years • Post-surgical care" },
+      { name: "Sarah Williams", status: "Stable", info: "Room 215 • 34 years • Migraines" },
+      { name: "Michael Brown", status: "Critical", info: "Room 220 • 72 years • CHF, COPD" }
+    ];
+
+    function filterPatients() {
+      const searchTerm = document.getElementById('patient-search').value.toLowerCase();
+      const patientCards = document.querySelectorAll('.patient-card');
+      const noResults = document.getElementById('no-results');
+      let hasVisiblePatients = false;
+
+      patientCards.forEach(card => {
+        const patientName = card.getAttribute('data-name').toLowerCase();
+        if (patientName.includes(searchTerm)) {
+          card.style.display = 'block';
+          hasVisiblePatients = true;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      if (hasVisiblePatients) {
+        noResults.classList.add('hidden');
+      } else {
+        noResults.classList.remove('hidden');
+      }
+    }
+
+    function showMedicationList(patientName, status) {
+      document.getElementById('patient-selection-view').classList.add('hidden');
+      document.getElementById('medication-view').classList.remove('hidden');
+      document.getElementById('current-patient').textContent = patientName;
+      document.getElementById('patient-status').textContent = status;
+      
+      // Change status color based on condition
+      const statusElement = document.getElementById('patient-status');
+      if (status === 'Critical') {
+        statusElement.style.backgroundColor = '#e74c3c';
+      } else if (status === 'Stable') {
+        statusElement.style.backgroundColor = '#f39c12';
+      } else {
+        statusElement.style.backgroundColor = '#2ecc71';
+      }
+    }
+
+    function showPatientSelection() {
+      document.getElementById('patient-selection-view').classList.remove('hidden');
+      document.getElementById('medication-view').classList.add('hidden');
+      // Clear search when returning to patient list
+      document.getElementById('patient-search').value = '';
+      filterPatients(); // Reset the filter
+    }
+  </script>
+</body>
+</html>
